@@ -1,0 +1,168 @@
+map $http_accept $file_suffix {
+	text/html html;
+	application/json json;
+	text/svg svg;
+	text/plain txt;
+}
+
+upstream trypurescript {
+	server localhost:8051;
+}
+
+upstream tryhalogen {
+	server localhost:8057;
+}
+
+upstream tryflare {
+	server localhost:8053;
+}
+
+upstream trypux {
+	server localhost:8056;
+}
+
+upstream trythermite {
+	server localhost:8052;
+}
+
+server {
+	listen 80;
+	server_name community.purescript.org;
+	return 301 https://$host$request_uri;
+}
+
+server {
+	# listen 80 default_server;
+	# listen [::]:80 default_server ipv6only=on;
+
+	listen 443 ssl;
+
+	server_name community.purescript.org;
+
+	ssl_certificate /etc/letsencrypt/live/community.purescript.org/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/community.purescript.org/privkey.pem;
+
+  ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+  ssl_prefer_server_ciphers on;
+  ssl_ciphers 'EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH';
+
+	root /usr/share/nginx/html;
+	index index.html index.htm;
+
+	location / {
+		include /etc/nginx/mime.types;
+		try_files $uri $uri/ =404;
+	}
+}
+
+server {
+	listen 80;
+	server_name compile.purescript.org;
+	return 301 https://$host$request_uri;
+}
+
+server {
+	listen 443 ssl;
+
+  server_name compile.purescript.org;
+
+  ssl_certificate /etc/letsencrypt/live/compile.purescript.org/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/compile.purescript.org/privkey.pem;
+
+	ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+  ssl_prefer_server_ciphers on;
+  ssl_ciphers 'EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH';
+
+	access_log /var/log/nginx/trypurescript.access.log;
+
+	location /flare {
+		rewrite ^/flare(/.*)$ $1 break;
+		proxy_pass http://tryflare/;
+		add_header Access-Control-Allow-Origin *;
+	}
+
+	location /halogen {
+		rewrite ^/halogen(/.*)$ $1 break;
+		proxy_pass http://tryhalogen/;
+		add_header Access-Control-Allow-Origin *;
+	}
+
+	location /pux {
+		rewrite ^/pux(/.*)$ $1 break;
+		proxy_pass http://trypux/;
+		add_header Access-Control-Allow-Origin *;
+	}
+
+	location /thermite {
+		rewrite ^/thermite(/.*)$ $1 break;
+		proxy_pass http://trythermite/;
+		add_header Access-Control-Allow-Origin *;
+	}
+
+	location / {
+		proxy_pass http://trypurescript/;
+		add_header Access-Control-Allow-Origin *;
+	}
+
+  error_page 502 /502.html;
+  location = /502.html {
+
+    root /usr/share/nginx/html;
+  }
+}
+
+server {
+  listen 80;
+  server_name pursuit.purescript.org;
+  return 301 https://$host$request_uri;
+}
+
+server {
+  listen 443 ssl;
+
+  server_name pursuit.purescript.org;
+
+	ssl_certificate /etc/letsencrypt/live/pursuit.purescript.org/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/pursuit.purescript.org/privkey.pem;
+
+  ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+  ssl_prefer_server_ciphers on;
+  ssl_ciphers 'EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH';
+
+	access_log /var/log/nginx/pursuit.access.log;
+
+	add_header Content-Security-Policy "default-src 'none'; script-src 'self' *.google-analytics.com; style-src 'self' fonts.googleapis.com; font-src fonts.gstatic.com; img-src *; connect-src 'self'; plugin-types 'none'; base-uri 'none'";
+
+	location @backend {
+		add_header X-Cache "Miss";
+		proxy_pass http://localhost:3000;
+	}
+
+	location ~* /badge$ {
+		add_header Cache-Control "no-cache";
+		proxy_pass http://localhost:3000;
+	}
+
+  location / {
+		# this is really gross. sorry
+		# it's here because nginx will return 405 Not Allowed by default
+		# if you try to access a static file using the POST method, and
+		# we need to be able to do `POST /packages`.
+		error_page 418 = @backend;
+		recursive_error_pages on;
+
+		if ($request_method != GET) {
+		  return 418;
+		}
+
+		root /var/pursuit/data/cache;
+
+		try_files $uri/index.$file_suffix @backend;
+  }
+
+	location /raw {
+		rewrite ^/raw(/.*)$ $1 break;
+    root /var/pursuit/data/verified;
+		try_files $uri.json @backend;
+	}
+}

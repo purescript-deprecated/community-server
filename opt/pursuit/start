@@ -1,0 +1,11 @@
+LC_ALL=en_US.UTF-8 \
+  LANG=en_US.UTF-8 \
+  PURSUIT_DATA_DIR=/var/pursuit/data \
+  PURSUIT_APPROOT=https://pursuit.purescript.org \
+  PURSUIT_MINIMUM_COMPILER_VERSION=0.9.1 \
+  PURSUIT_STATIC_DIR=/etc/pursuit/static \
+  PURSUIT_MAX_HOOGLE_PARSE_ERRORS=10000 \
+  PURSUIT_GITHUB_CLIENT_ID="" \
+  PURSUIT_GITHUB_CLIENT_SECRET="" \
+  PURSUIT_GITHUB_AUTH_TOKEN="" \
+    /opt/pursuit/pursuit

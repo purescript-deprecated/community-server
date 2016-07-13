@@ -1,0 +1,85 @@
+server {
+  listen 80;
+  server_name community.purescript.org;
+  return 301 https://$host$request_uri;
+}
+
+server {
+  # listen 80 default_server;
+  # listen [::]:80 default_server ipv6only=on;
+
+  listen 443 ssl;
+
+  server_name community.purescript.org;
+
+  ssl_certificate /etc/letsencrypt/live/community.purescript.org/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/community.purescript.org/privkey.pem;
+
+  ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+  ssl_prefer_server_ciphers on;
+  ssl_ciphers 'EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH';
+
+  root /usr/share/nginx/html;
+  index index.html index.htm;
+
+  location / {
+    include /etc/nginx/mime.types;
+    try_files $uri $uri/ =404;
+  }
+}
+
+server {
+  listen 80;
+  server_name compile.purescript.org;
+  return 301 https://$host$request_uri;
+}
+
+server {
+  listen 443 ssl;
+
+  server_name compile.purescript.org;
+
+  ssl_certificate /etc/letsencrypt/live/compile.purescript.org/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/compile.purescript.org/privkey.pem;
+
+  ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+  ssl_prefer_server_ciphers on;
+  ssl_ciphers 'EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH';
+
+  root /usr/share/nginx/html;
+  index index.html index.htm;
+
+  location / {
+
+    include /etc/nginx/mime.types;
+    try_files $uri $uri/ =404;
+  }
+}
+
+server {
+  listen 80;
+  server_name pursuit.purescript.org;
+  return 301 https://$host$request_uri;
+}
+
+server {
+  listen 443 ssl;
+
+  server_name pursuit.purescript.org;
+
+  ssl_certificate /etc/letsencrypt/live/pursuit.purescript.org/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/pursuit.purescript.org/privkey.pem;
+
+  ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+  ssl_prefer_server_ciphers on;
+  ssl_ciphers 'EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH';
+
+  root /usr/share/nginx/html;
+  index index.html index.htm;
+
+  location / {
+
+    include /etc/nginx/mime.types;
+    try_files $uri $uri/ =404;
+  }
+}
